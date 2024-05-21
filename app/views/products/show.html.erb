@@ -1,0 +1,53 @@
+<h1><%= @product.name %></h1>
+<p>Price: <%= @product.price %></p>
+<p>Description: <%= @product.description %></p>
+
+<h2>Comments</h2>
+<ul id="comments_list">
+  <% @comments.each do |comment| %>
+    <li><%= comment.content %></li>
+  <% end %>
+</ul>
+
+<h2>Add Comment</h2>
+<form id="new_comment_form">
+  <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+  <textarea name="content" placeholder="Enter your comment"></textarea>
+  <button type="submit" id="submit_comment">Submit</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('new_comment_form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    submitComment();
+  });
+});
+
+function submitComment() {
+  var formData = new FormData(document.getElementById('new_comment_form'));
+  var productId = '<%= @product.id %>';
+  formData.append('product_id', productId);
+
+  fetch('/comments', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      var comment = data.comment;
+      var commentsList = document.getElementById('comments_list');
+      var li = document.createElement('li');
+      li.textContent = comment.content;
+      commentsList.appendChild(li);
+      document.getElementById('new_comment_form').reset();
+    } else {
+      console.error('Failed to add comment');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+}
+</script>

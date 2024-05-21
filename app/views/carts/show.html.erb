@@ -1,0 +1,67 @@
+<h1>Your Cart</h1>
+
+<% if @cart_items.any? %>
+  <ul class="list-group">
+    <% @cart_items.each do |cart_item| %>
+      <li class="list-group-item">
+        <div class="row">
+          <div class="col">
+            <strong><%= cart_item.product.name %></strong>
+            <p>Price: <%= cart_item.product.price %></p>
+          </div>
+          <div class="col">
+            <div class="input-group">
+              <button class="btn btn-outline-secondary" onclick="updateQuantity(<%= cart_item.id %>, 'decrease')">-</button>
+              <span id="quantity_<%= cart_item.id %>" class="quantity-field"><%= cart_item.quantity %></span>
+              <button class="btn btn-outline-secondary" onclick="updateQuantity(<%= cart_item.id %>, 'increase')">+</button>
+            </div>
+          </div>
+          
+        </div>
+      </li>
+    <% end %>
+  </ul>
+  <a class="btn btn-outline-primary my-2 my-sm-0" href="<%= checkout_path %>">Checkout</a>
+<% else %>
+  <p>Your cart is empty.</p>
+<% end %>
+
+<script>
+function updateQuantity(cartItemId, action) {
+  var quantityField = document.querySelector(`#quantity_${cartItemId}`);
+  var currentQuantity = parseInt(quantityField.innerText);
+  
+  var newQuantity = 0;
+  if (action === 'increase') {
+    newQuantity = currentQuantity + 1;
+  } else if (action === 'decrease') {
+    if (currentQuantity > 1) {
+      newQuantity = currentQuantity - 1;
+    } else {
+      newQuantity = 1; 
+    }}
+  
+  fetch(`/cart_items/${cartItemId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
+    body: JSON.stringify({ quantity: newQuantity })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to update quantity');
+    }
+    return response.json();
+  })
+  .then(data => {
+    
+    quantityField.innerText = data.quantity;
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+}
+</script>
+
